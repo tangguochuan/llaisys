@@ -164,27 +164,88 @@ void Tensor::debug() const {
 }
 
 bool Tensor::isContiguous() const {
-    TO_BE_IMPLEMENTED();
+    ptrdiff_t expected_stride = 1;
+    for(int i = ndim() - 1; i >= 0; i--){
+        if(_meta.strides[i] != expected_stride){
+            return false;
+        }
+        expected_stride *= _meta.shape[i];
+    }
     return true;
 }
 
 tensor_t Tensor::permute(const std::vector<size_t> &order) const {
-    TO_BE_IMPLEMENTED();
-    return std::shared_ptr<Tensor>(new Tensor(_meta, _storage));
+    //第一关，检查order长度是否匹配
+    CHECK_ARGUMENT(order.size() == this->ndim(), "Order size must match tensor ndim.");
+    //第二关，检查order是否合法
+    std::vector<bool> visited(this->ndim(), false);
+    for(auto o : order){
+        CHECK_ARGUMENT(o < this->ndim(), "Order values must be in range [0, ndim).");
+        CHECK_ARGUMENT(!visited[o], "Order values must be unique.");
+        visited[o] = true;
+    }
+    //构造新的meta信息
+    TensorMeta new_meta;
+    new_meta.dtype = _meta.dtype;
+    new_meta.shape.resize(this->ndim());
+    new_meta.strides.resize(this->ndim());
+    for(size_t i = 0; i < this->ndim(); i++){
+        new_meta.shape[i] = _meta.shape[order[i]];
+        new_meta.strides[i] = _meta.strides[order[i]];
+    }
+    core::storage_t new_storage = _storage; //这里_storage不能直接传入构造函数，否则会被move掉
+    return std::shared_ptr<Tensor>(new Tensor(new_meta, new_storage, _offset));
 }
 
 tensor_t Tensor::view(const std::vector<size_t> &shape) const {
-    TO_BE_IMPLEMENTED();
-    return std::shared_ptr<Tensor>(new Tensor(_meta, _storage));
+    //第一关，检查是否连续
+    CHECK_ARGUMENT(isContiguous(), "Tensor must be contiguous to view.");
+    //第二关，检查元素数量是否匹配
+    size_t new_numel = 1;
+    for(auto s : shape){
+        new_numel *= s;
+    }
+    CHECK_ARGUMENT(new_numel == this->numel(), "Number of elements must match to view.");
+    //构造新的meta信息
+    TensorMeta new_meta;
+    new_meta.dtype = _meta.dtype;
+    new_meta.shape = shape;
+    size_t ndim_ = shape.size();
+    new_meta.strides.resize(ndim_);
+    int stride = 1;
+    for(int i = ndim_ - 1; i >= 0; i--){
+        new_meta.strides[i] = stride;
+        stride *= shape[i];
+    }
+    core::storage_t new_storage = _storage; //这里_storage不能直接传入构造函数，否则会被move掉
+    return std::shared_ptr<Tensor>(new Tensor(new_meta, new_storage, _offset));
 }
 
 tensor_t Tensor::slice(size_t dim, size_t start, size_t end) const {
-    TO_BE_IMPLEMENTED();
-    return std::shared_ptr<Tensor>(new Tensor(_meta, _storage));
+    //第一关，检查dim是否合法
+    CHECK_ARGUMENT(dim < this->ndim(), "Dimension out of range.");
+    //第二关，检查start和end是否合法
+    CHECK_ARGUMENT(start <= end && end <= _meta.shape[dim], "Invalid slice range.");
+    //构造新的meta信息
+    TensorMeta new_meta = _meta;
+    new_meta.shape[dim] = end - start;
+    size_t new_offset = _offset + start * _meta.strides[dim] * this->elementSize();
+    core::storage_t new_storage = _storage; //这里_storage不能直接传入构造函数，否则会被move掉
+    return std::shared_ptr<Tensor>(new Tensor(new_meta, new_storage, new_offset));
 }
 
 void Tensor::load(const void *src_) {
-    TO_BE_IMPLEMENTED();
+    if(_storage->isHost()){
+        std::memcpy(this->data(), src_, this->numel() * this->elementSize());
+        return;
+    }
+    core::context().setDevice(this->deviceType(), this->deviceId());
+    core::context().runtime().api()->memcpy_sync(
+        this->data(),
+        src_,
+        this->numel() * this->elementSize(),
+        LLAISYS_MEMCPY_H2D);
+    return;
 }
 
 tensor_t Tensor::contiguous() const {
