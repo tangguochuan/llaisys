@@ -165,7 +165,7 @@ void Tensor::debug() const {
 
 bool Tensor::isContiguous() const {
     ptrdiff_t expected_stride = 1;
-    for(int i = ndim() - 1; i >= 0; i--){
+    for(size_t i = ndim() - 1; i >= 0; i--){
         if(_meta.strides[i] != expected_stride){
             return false;
         }
@@ -212,8 +212,8 @@ tensor_t Tensor::view(const std::vector<size_t> &shape) const {
     new_meta.shape = shape;
     size_t ndim_ = shape.size();
     new_meta.strides.resize(ndim_);
-    int stride = 1;
-    for(int i = ndim_ - 1; i >= 0; i--){
+    size_t stride = 1;
+    for(size_t i = ndim_ - 1; i >= 0; i--){
         new_meta.strides[i] = stride;
         stride *= shape[i];
     }
