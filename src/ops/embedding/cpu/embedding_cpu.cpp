@@ -3,8 +3,8 @@
 #include "../../../utils.hpp"
 #include <cstring>
 template <typename T>
-void embedding_(T *out, std::byte *index, T *weight, int stride,int index_numel) {
-    for(int i = 0; i < index_numel; i++){
+void embedding_(T *out, std::byte *index, T *weight, size_t stride,size_t index_numel) {
+    for(size_t i = 0; i < index_numel; i++){
         int64_t idx = static_cast<int64_t>(reinterpret_cast<int64_t*>(index)[i]);
         T* src = weight + idx * stride;
         T* dst = out + i * stride;
