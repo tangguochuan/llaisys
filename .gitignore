@@ -5,7 +5,7 @@ model_build/
 python/build/
 python/llaisys.egg-info/
 # Models
-models/
+/models/
 
 #useless files
 model_arch.txt
