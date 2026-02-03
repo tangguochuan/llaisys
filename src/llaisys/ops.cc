@@ -27,10 +27,9 @@ __C {
             llaisys::ops::linear(out->tensor, in->tensor, weight->tensor, nullptr);
             return;
         }
-
-        
         llaisys::ops::linear(out->tensor, in->tensor, weight->tensor, bias->tensor);
     }
+    
     void llaisysRearrange(llaisysTensor_t out, llaisysTensor_t in) {
         llaisys::ops::rearrange(out->tensor, in->tensor);
     }
