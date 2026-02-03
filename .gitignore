@@ -14,6 +14,7 @@ scripts/model_download.py
 scripts/view_model_safetensor.py
 test_qwen2_model.cpp
 test_xmake.lua
+scripts/hf.py
 # Binaries
 bin/
 lib/

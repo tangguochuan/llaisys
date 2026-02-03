@@ -150,7 +150,7 @@ class Qwen2:
         
         device_ids = (c_int * 1)(0)
         
-        print(f"[DEBUG] Creating C model with dtype={meta.dtype}, nlayer={meta.nlayer}")
+        # print(f"[DEBUG] Creating C model with dtype={meta.dtype}, nlayer={meta.nlayer}")
         self.model = LIB_LLAISYS.llaisysQwen2ModelCreate(
             byref(meta),
             device_type,
@@ -161,13 +161,13 @@ class Qwen2:
         if not self.model:
             raise RuntimeError("Failed to create C model")
         
-        print(f"[DEBUG] C model created: {self.model}")
+        # print(f"[DEBUG] C model created: {self.model}")
         
         weights_c_ptr = LIB_LLAISYS.llaisysQwen2ModelWeights(self.model)
         if not weights_c_ptr:
             raise RuntimeError("Failed to get model weights")
         self.weights_ptr = cast(weights_c_ptr, POINTER(LlaisysQwen2Weights))
-        print(f"[DEBUG] Weights pointer: {weights_c_ptr}")
+        # print(f"[DEBUG] Weights pointer: {weights_c_ptr}")
 
     def _load_weights(self):
         try:
@@ -180,12 +180,12 @@ class Qwen2:
         if not weight_files:
             raise FileNotFoundError(f"No safetensors files found in {self.model_path}")
         
-        print(f"[DEBUG] Found {len(weight_files)} weight files")
+        # print(f"[DEBUG] Found {len(weight_files)} weight files")
         loaded_count = 0
         skipped_count = 0
         
         for file in weight_files:
-            print(f"[DEBUG] Loading {file.name}...")
+            # print(f"[DEBUG] Loading {file.name}...")
             with safetensors.safe_open(file, framework="pt", device="cpu") as f:
                 for name in f.keys():
                     tensor = f.get_tensor(name)
@@ -195,51 +195,51 @@ class Qwen2:
                     else:
                         skipped_count += 1
         
-        print(f"[DEBUG] Weight loading complete: {loaded_count} loaded, {skipped_count} skipped")
+        # print(f"[DEBUG] Weight loading complete: {loaded_count} loaded, {skipped_count} skipped")
 
     def _copy_weight(self, name: str, tensor) -> bool:
         import torch
         
-        print(f"[DEBUG] _copy_weight: name={name}, shape={tuple(tensor.shape)}, dtype={tensor.dtype}, contiguous={tensor.is_contiguous()}")
+        # print(f"[DEBUG] _copy_weight: name={name}, shape={tuple(tensor.shape)}, dtype={tensor.dtype}, contiguous={tensor.is_contiguous()}")
         
         if not tensor.is_contiguous():
-            print(f"[DEBUG] Making tensor contiguous...")
+            # print(f"[DEBUG] Making tensor contiguous...")
             tensor = tensor.contiguous()
         
         c_tensor = self._get_c_tensor(name)
         if c_tensor is None:
-            print(f"[DEBUG] No C tensor mapping for {name}, skipping")
+            # print(f"[DEBUG] No C tensor mapping for {name}, skipping")
             return False
         
-        print(f"[DEBUG] C tensor pointer: {c_tensor}")
+        # print(f"[DEBUG] C tensor pointer: {c_tensor}")
         
         try:
             if tensor.dtype == torch.bfloat16:
-                print(f"[DEBUG] Converting BF16 to uint16 view...")
+                # print(f"[DEBUG] Converting BF16 to uint16 view...")
                 # Ensure contiguous before view
                 tensor_u16 = tensor.view(torch.uint16)
                 if not tensor_u16.is_contiguous():
-                    print(f"[DEBUG] Making uint16 view contiguous...")
+                    # print(f"[DEBUG] Making uint16 view contiguous...")
                     tensor_u16 = tensor_u16.contiguous()
                 np_array = tensor_u16.numpy()
             elif tensor.dtype == torch.float16:
-                print(f"[DEBUG] Converting F16 to uint16 view...")
+                # print(f"[DEBUG] Converting F16 to uint16 view...")
                 tensor_u16 = tensor.view(torch.uint16)
                 if not tensor_u16.is_contiguous():
-                    print(f"[DEBUG] Making uint16 view contiguous...")
+                    # print(f"[DEBUG] Making uint16 view contiguous...")
                     tensor_u16 = tensor_u16.contiguous()
                 np_array = tensor_u16.numpy()
             else:
-                print(f"[DEBUG] Converting to numpy...")
+                # print(f"[DEBUG] Converting to numpy...")
                 np_array = tensor.numpy()
             
-            print(f"[DEBUG] np_array shape={np_array.shape}, dtype={np_array.dtype}, flags={np_array.flags}")
+            # print(f"[DEBUG] np_array shape={np_array.shape}, dtype={np_array.dtype}, flags={np_array.flags}")
             
             data_ptr = np_array.ctypes.data_as(c_void_p)
-            print(f"[DEBUG] Calling tensorLoad with data_ptr={data_ptr}")
+            # print(f"[DEBUG] Calling tensorLoad with data_ptr={data_ptr}")
             
             LIB_LLAISYS.tensorLoad(c_tensor, data_ptr)
-            print(f"[DEBUG] tensorLoad successful")
+            # print(f"[DEBUG] tensorLoad successful")
             return True
             
         except Exception as e:
@@ -298,7 +298,7 @@ class Qwen2:
             else:
                 return None
         
-        print(f"[DEBUG] _get_c_tensor: {name} -> ptr={ptr}")
+        # print(f"[DEBUG] _get_c_tensor: {name} -> ptr={ptr}")
         return ptr
 
     def generate(
@@ -310,7 +310,7 @@ class Qwen2:
         temperature: float = 0.8,
     ) -> List[int]:
         
-        print(f"[DEBUG] generate called: inputs={inputs[:20]}..., max_new_tokens={max_new_tokens}, top_k={top_k}, top_p={top_p}, temperature={temperature}")
+        # print(f"[DEBUG] generate called: inputs={inputs[:20]}..., max_new_tokens={max_new_tokens}, top_k={top_k}, top_p={top_p}, temperature={temperature}")
         
         probs_buffer = (c_float * self.vocab_size)()
         output_tokens = list(inputs)  
@@ -318,10 +318,10 @@ class Qwen2:
         prompt_len = len(inputs)
         input_arr = (c_int64 * prompt_len)(*inputs)
         
-        print(f"[DEBUG] Prefill: prompt_len={prompt_len}")
+        # print(f"[DEBUG] Prefill: prompt_len={prompt_len}")
         
         # result是状态值，0表示成功，真正返回的概率在probs_buffer中
-        print(f"[DEBUG] Calling llaisysQwen2ModelInfer for prefill...")
+        # print(f"[DEBUG] Calling llaisysQwen2ModelInfer for prefill...")
         result = LIB_LLAISYS.llaisysQwen2ModelInfer(
             self.model,
             input_arr,
@@ -330,28 +330,28 @@ class Qwen2:
             c_float(temperature)
         )
         
-        print(f"[DEBUG] Prefill result: {result}")
+        # print(f"[DEBUG] Prefill result: {result}")
         
         if result != 0:
             raise RuntimeError(f"Prefill failed with code {result}")
         
         next_token = self._sample(probs_buffer, top_k, top_p)
-        print(f"[DEBUG] Sampled next_token: {next_token}")
+        # print(f"[DEBUG] Sampled next_token: {next_token}")
         output_tokens.append(next_token)
         
         # decode 阶段
         generated_count = 1  
         while True:
             if max_new_tokens is not None and generated_count >= max_new_tokens:
-                print(f"[DEBUG] Reached max_new_tokens")
+                # print(f"[DEBUG] Reached max_new_tokens")
                 break
             if next_token == self.eos_token_id:
-                print(f"[DEBUG] Reached EOS token")
+                # print(f"[DEBUG] Reached EOS token")
                 break
             
             single_token = (c_int64 * 1)(next_token)
             
-            print(f"[DEBUG] Decode step {generated_count}: token={next_token}")
+            # print(f"[DEBUG] Decode step {generated_count}: token={next_token}")
             result = LIB_LLAISYS.llaisysQwen2ModelInfer(
                 self.model,
                 single_token,
@@ -360,17 +360,17 @@ class Qwen2:
                 c_float(temperature)
             )
             
-            print(f"[DEBUG] Decode result: {result}")
+            # print(f"[DEBUG] Decode result: {result}")
             
             if result != 0:
                 raise RuntimeError(f"Decode failed with code {result}")
             
             next_token = self._sample(probs_buffer, top_k, top_p)
-            print(f"[DEBUG] Sampled next_token: {next_token}")
+            # print(f"[DEBUG] Sampled next_token: {next_token}")
             output_tokens.append(next_token)
             generated_count += 1
         
-        print(f"[DEBUG] Generation complete: {len(output_tokens)} tokens")
+        # print(f"[DEBUG] Generation complete: {len(output_tokens)} tokens")
         return output_tokens
 
     def _sample(self, probs_buffer, top_k: int, top_p: float) -> int:
@@ -402,19 +402,9 @@ class Qwen2:
             return int(np.random.choice(self.vocab_size, p=probs))
 
     def __del__(self):
-        """析构时释放模型: llaisysQwen2ModelDestroy"""
         if hasattr(self, 'model') and self.model:
-            print(f"[DEBUG] Destroying model...")
+            # print(f"[DEBUG] Destroying model...")
             LIB_LLAISYS.llaisysQwen2ModelDestroy(self.model)
             self.model = None
 
 
-# # 使用示例
-# if __name__ == "__main__":
-#     # 加载模型
-#     model = Qwen2("/path/to/DeepSeek-R1-Distill-Qwen-1.5B", device_type=0)
-    
-#     # 生成（需要配合 tokenizer）
-#     prompt_tokens = [1, 2, 3]  # 你的 tokenizer 编码结果
-#     output = model.generate(prompt_tokens, max_new_tokens=100)
-#     print(f"Generated: {output}")

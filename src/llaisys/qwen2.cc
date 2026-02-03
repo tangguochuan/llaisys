@@ -11,15 +11,15 @@ struct LlaisysQwen2Model
 
 __C struct LlaisysQwen2Model* llaisysQwen2ModelCreate(const LlaisysQwen2Meta* meta, llaisysDeviceType_t device, int* device_ids, int ndevice)
 {
-    std::cerr << "[C++ DEBUG] llaisysQwen2ModelCreate called" << std::endl;
+    // std::cerr << "[C++ DEBUG] llaisysQwen2ModelCreate called" << std::endl;
     if(meta == nullptr || device_ids == nullptr || ndevice <= 0) {
-        std::cerr << "[C++ ERROR] Invalid arguments" << std::endl;
+        // std::cerr << "[C++ ERROR] Invalid arguments" << std::endl;
         return nullptr;
     }
     std::vector<int> dev_ids(device_ids, device_ids + ndevice);
-    std::cerr << "[C++ DEBUG] Creating LlaisysQwen2Model..." << std::endl;
+    // std::cerr << "[C++ DEBUG] Creating LlaisysQwen2Model..." << std::endl;
     LlaisysQwen2Model* llaisys_model = new LlaisysQwen2Model{ llaisys::models::Qwen2Model(meta, device, dev_ids) };
-    std::cerr << "[C++ DEBUG] LlaisysQwen2Model created at " << llaisys_model << std::endl;
+    // std::cerr << "[C++ DEBUG] LlaisysQwen2Model created at " << llaisys_model << std::endl;
     return llaisys_model;
 }
 
@@ -32,13 +32,13 @@ __C void llaisysQwen2ModelDestroy(struct LlaisysQwen2Model* model)
 
 __C struct LlaisysQwen2Weights* llaisysQwen2ModelWeights(struct LlaisysQwen2Model* model)
 {
-    std::cerr << "[C++ DEBUG] llaisysQwen2ModelWeights called, model=" << model << std::endl;
+    // std::cerr << "[C++ DEBUG] llaisysQwen2ModelWeights called, model=" << model << std::endl;
     if(model == nullptr) {
-        std::cerr << "[C++ ERROR] model is nullptr!" << std::endl;
+        // std::cerr << "[C++ ERROR] model is nullptr!" << std::endl;
         return nullptr;
     }
     struct LlaisysQwen2Weights* weights = model->model.weights();
-    std::cerr << "[C++ DEBUG] weights=" << weights << std::endl;
+    // std::cerr << "[C++ DEBUG] weights=" << weights << std::endl;
     return weights;
 }
 
