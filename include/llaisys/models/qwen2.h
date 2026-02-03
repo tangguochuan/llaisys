@@ -37,6 +37,8 @@ __C {
 
     __export struct LlaisysQwen2Weights *llaisysQwen2ModelWeights(struct LlaisysQwen2Model * model);
 
-    __export int64_t llaisysQwen2ModelInfer(struct LlaisysQwen2Model * model, int64_t * token_ids, size_t ntoken);
+    //返回0表示成功，其他值表示失败
+    //返回logits,采样交给Python端来实现
+    __export int llaisysQwen2ModelInfer(struct LlaisysQwen2Model * model, int64_t * token_ids, size_t ntoken, float * probs_out, float temperature);
 }
 #endif // LLAISYS_MODELS_QWEN2_H

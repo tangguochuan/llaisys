@@ -1,7 +1,19 @@
 # Xmake cache
 .xmake/
 build/
+model_build/
+python/build/
+python/llaisys.egg-info/
+# Models
+models/
 
+#useless files
+model_arch.txt
+ASSIGNMENT3_ROADMAP.md
+scripts/model_download.py
+scripts/view_model_safetensor.py
+test_qwen2_model.cpp
+test_xmake.lua
 # Binaries
 bin/
 lib/
@@ -71,6 +83,7 @@ htmlcov/
 .nox/
 .cache/
 .pytest_cache/
+scripts/hf.py
 
 # Jupyter Notebook checkpoints
 .ipynb_checkpoints
