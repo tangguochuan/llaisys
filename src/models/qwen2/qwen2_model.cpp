@@ -180,7 +180,7 @@ llaisys::tensor_t Qwen2Model::infer(const std::vector<int64_t>& token_ids) {
     }
 //     std::cerr << "[DEBUG infer] weights_->in_embed is valid" << std::endl;
     
-    int seq_len = token_ids.size();
+    int seq_len = static_cast<int>(token_ids.size());
     int total_len = cache_len_ + seq_len;
 //     std::cerr << "[DEBUG infer] seq_len=" << seq_len << ", cache_len_=" << cache_len_ << ", total_len=" << total_len << std::endl;
     
