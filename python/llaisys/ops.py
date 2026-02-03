@@ -1,6 +1,6 @@
 from .libllaisys import LIB_LLAISYS
 from .tensor import Tensor
-from ctypes import c_float, c_int,c_void_p
+from ctypes import c_float, c_int
 
 
 class Ops:
@@ -20,8 +20,9 @@ class Ops:
 
     @staticmethod
     def linear(out: Tensor, inp: Tensor, weight: Tensor, bias: Tensor):
+        bias_ptr = bias.lib_tensor() if bias is not None else None
         LIB_LLAISYS.llaisysLinear(
-            out.lib_tensor(), inp.lib_tensor(), weight.lib_tensor(), bias.lib_tensor()
+            out.lib_tensor(), inp.lib_tensor(), weight.lib_tensor(), bias_ptr
         )
 
     @staticmethod
