@@ -4,6 +4,7 @@
 
 #include <cmath>
 
+
 template <typename T>
 void rope_(T *out, T *in, int64_t *pos_ids, float theta, int seq_len, int nheads, int head_dim){
     int half_dim = head_dim / 2;
